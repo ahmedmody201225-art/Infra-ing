@@ -7,25 +7,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--navy:#1F3864;--red:#C0392B;--green:#1E8449;--purple:#7D3C98;--bg:#F4F7FB;--card:#fff;--ink:#1F2937;--mute:#6B7280;--line:#E3E9F2;
---red-t:#FDEDEC;--green-t:#E9F7EF;--purple-t:#F4ECF7;--navy-t:#DCE6F2;--accent:var(--red)}
+:root{--navy:#7B1E3A;--gold:#C9A24B;--gold-d:#A8842F;--red:#C0392B;--green:#1E8449;--purple:#7D3C98;--bg:#FAF6F1;--card:#fff;--ink:#1F2937;--mute:#6B7280;--line:#EADFD3;
+--red-t:#FDEDEC;--green-t:#E9F7EF;--purple-t:#F4ECF7;--navy-t:#F3E3E8;--accent:var(--red)}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{font-family:'Cairo',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;min-height:100vh}
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
-header{background:var(--navy);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px rgba(0,0,0,.15)}
-.hwrap{max-width:1200px;margin:auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.brand{font-weight:800;font-size:20px;letter-spacing:.5px}
-.brand small{display:block;font-weight:400;font-size:11px;opacity:.75;letter-spacing:0}
-nav{display:flex;gap:4px;overflow-x:auto;flex:1;scrollbar-width:none}
-nav::-webkit-scrollbar{display:none}
-nav button{background:transparent;border:0;color:#cfd9ea;padding:9px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600}
-nav button:hover{background:rgba(255,255,255,.1)}
-nav button.on{background:#fff;color:var(--navy)}
-.who{font-size:12px;display:flex;align-items:center;gap:8px;opacity:.95}
-.badge{padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.18);font-size:11px;font-weight:600}
-.badge.demo{background:#F5B041;color:#4a3000}
-.linkbtn{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px}
+.app{display:flex;min-height:100vh}
+#side{width:236px;flex:none;background:linear-gradient(180deg,#5A1229,#7B1E3A);color:#fff;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;border-inline-start:3px solid var(--gold);z-index:40;box-shadow:-2px 0 14px rgba(0,0,0,.18)}
+.content{flex:1;min-width:0}
+.brand{font-weight:800;font-size:24px;letter-spacing:1px;color:var(--gold);padding:22px 18px 16px;border-bottom:1px solid rgba(201,162,75,.35)}
+.brand small{display:block;font-weight:400;font-size:11px;color:#f0dfe4;opacity:.85;letter-spacing:0;margin-top:2px}
+nav{display:flex;flex-direction:column;gap:4px;padding:14px 10px;flex:1;overflow-y:auto}
+nav button{background:transparent;border:0;color:#f0dfe4;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:600;text-align:right;font-size:15px;display:flex;gap:10px;align-items:center;border-inline-start:3px solid transparent}
+nav button:hover{background:rgba(201,162,75,.15)}
+nav button.on{background:var(--gold);color:#4a0f20;border-inline-start-color:#fff}
+.who{font-size:12px;display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-top:1px solid rgba(201,162,75,.35);align-items:flex-start}
+.badge{padding:3px 9px;border-radius:99px;background:rgba(201,162,75,.25);color:var(--gold);font-size:11px;font-weight:600}
+.badge.demo{background:var(--gold);color:#4a0f20}
+#who{word-break:break-all;opacity:.85}
+.mtop{display:none}
+#bd{display:none}
+.linkbtn{background:none;border:1px solid var(--gold);color:var(--gold);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px}
 main{max-width:1200px;margin:auto;padding:18px 16px 60px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(31,56,100,.05)}
 h2{margin:0 0 14px;font-size:19px;color:var(--navy)}
@@ -72,7 +75,7 @@ h3{margin:0 0 10px;font-size:16px;color:var(--navy)}
 .sum{margin-inline-start:auto;font-weight:700;color:var(--navy);font-size:14px}
 .tw{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:68vh}
 table{border-collapse:collapse;width:100%;min-width:640px;background:#fff}
-th{position:sticky;top:0;background:var(--navy);color:#fff;font-size:13px;padding:10px 10px;text-align:right;white-space:nowrap}
+th{position:sticky;top:0;background:var(--navy);color:#fff;border-bottom:3px solid var(--gold);font-size:13px;padding:10px 10px;text-align:right;white-space:nowrap}
 td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
 tr:hover td{background:#FAFCFF}
 td.num,th.num{text-align:left;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
@@ -81,7 +84,11 @@ td.act{white-space:nowrap;text-align:left}
 .ib:hover{background:var(--navy-t)}
 .empty{padding:30px;text-align:center;color:var(--mute)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:700px){nav{order:3;flex-basis:100%}.hwrap{gap:8px}}
+@media(max-width:900px){#side{position:fixed;top:0;bottom:0;right:0;transform:translateX(100%);transition:transform .25s}
+body.open #side{transform:none}
+body.open #bd{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30}
+.mtop{display:flex;align-items:center;gap:12px;background:var(--navy);color:var(--gold);padding:10px 14px;position:sticky;top:0;z-index:20;border-bottom:3px solid var(--gold);font-weight:800;font-size:18px}
+.mtop button{background:none;border:1px solid var(--gold);color:var(--gold);border-radius:8px;font-size:20px;padding:2px 10px;cursor:pointer}}
 @media(max-width:860px){.two{grid-template-columns:1fr}.rrow{grid-template-columns:62px 1fr auto}.rrow .d{display:none}}
 .bar{height:8px;background:var(--navy-t);border-radius:99px;overflow:hidden;min-width:70px}
 .bar i{display:block;height:100%;background:var(--navy)}
@@ -127,14 +134,18 @@ window.FIREBASE_CONFIG = {
   </form>
 </div>
 
-<header>
-  <div class="hwrap">
-    <div class="brand">INFRA<small>Engineering 2026 — الإدخال والمتابعة</small></div>
-    <nav id="nav"></nav>
-    <div class="who"><span class="badge" id="mode"></span><span id="who"></span><button class="linkbtn hidden" id="logout">خروج</button></div>
-  </div>
-</header>
-<main id="view"></main>
+<div class="app">
+<aside id="side">
+  <div class="brand">INFRA<small>Engineering 2026 — الإدخال والمتابعة</small></div>
+  <nav id="nav"></nav>
+  <div class="who"><span class="badge" id="mode"></span><span id="who"></span><button class="linkbtn hidden" id="logout">خروج</button></div>
+</aside>
+<div id="bd"></div>
+<div class="content">
+  <div class="mtop"><button id="burger" aria-label="القائمة">☰</button>INFRA</div>
+  <main id="view"></main>
+</div>
+</div>
 <div id="toast"></div>
 
 <script type="module">
@@ -173,6 +184,7 @@ const TABLE_COLS={
  revenues:[['date','التاريخ'],['party','الجهة'],['project','المشروع'],['amount','المبلغ',1],['cheque','شيك/تحويل'],['invoice','الفاتورة'],['bank','الإيداع']],
  clients:[['date','التاريخ'],['name','العميل'],['project','المشروع'],['amount','المبلغ',1],['note','ملاحظات']]};
 const COLNAMES=['expenses','revenues','clients'];
+const ICONS={entry:'✍️',expenses:'💸',revenues:'💰',clients:'👥',dash:'📊',settings:'⚙️'};
 const VIEWS=[['entry','إدخال'],['expenses','المصروفات'],['revenues','الإيرادات'],['clients','العملاء'],['dash','الداشبورد'],['settings','الإعدادات']];
 
 /* ============================ أدوات ============================ */
@@ -452,8 +464,9 @@ function renderSettings(){
 /* ============================ التنقل والتشغيل ============================ */
 function go(v){view=v;location.hash=v;render()}
 function renderNav(){
-  $('#nav').innerHTML=VIEWS.map(([k,l])=>'<button data-v="'+k+'" class="'+(k===view?'on':'')+'">'+l+'</button>').join('');
-  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+  $('#nav').innerHTML=VIEWS.map(([k,l])=>'<button data-v="'+k+'" class="'+(k===view?'on':'')+'">'+(ICONS[k]||'')+'<span>'+l+'</span></button>').join('');
+  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{document.body.classList.remove('open');go(b.dataset.v)});
+  $('#burger').onclick=()=>document.body.classList.toggle('open');$('#bd').onclick=()=>document.body.classList.remove('open');
 }
 function render(){
   renderNav();
