@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>INFRA — نظام الإدخال والمتابعة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1F3864;--red:#C0392B;--green:#1E8449;--purple:#7D3C98;--bg:#F4F7FB;--card:#fff;--ink:#1F2937;--mute:#6B7280;--line:#E3E9F2;
+--red-t:#FDEDEC;--green-t:#E9F7EF;--purple-t:#F4ECF7;--navy-t:#DCE6F2;--accent:var(--red)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Cairo',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;min-height:100vh}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+header{background:var(--navy);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.hwrap{max-width:1200px;margin:auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px;letter-spacing:.5px}
+.brand small{display:block;font-weight:400;font-size:11px;opacity:.75;letter-spacing:0}
+nav{display:flex;gap:4px;overflow-x:auto;flex:1;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{background:transparent;border:0;color:#cfd9ea;padding:9px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600}
+nav button:hover{background:rgba(255,255,255,.1)}
+nav button.on{background:#fff;color:var(--navy)}
+.who{font-size:12px;display:flex;align-items:center;gap:8px;opacity:.95}
+.badge{padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.18);font-size:11px;font-weight:600}
+.badge.demo{background:#F5B041;color:#4a3000}
+.linkbtn{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px}
+main{max-width:1200px;margin:auto;padding:18px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(31,56,100,.05)}
+h2{margin:0 0 14px;font-size:19px;color:var(--navy)}
+h3{margin:0 0 10px;font-size:16px;color:var(--navy)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.seg button{border:2px solid var(--line);background:#fff;border-radius:14px;padding:14px 8px;font-weight:700;font-size:16px;cursor:pointer;color:var(--mute);transition:.15s}
+.seg button small{display:block;font-weight:400;font-size:11px;margin-top:2px}
+.seg button.on{color:#fff;border-color:transparent}
+.seg button[data-c=expenses].on{background:var(--red)}
+.seg button[data-c=revenues].on{background:var(--green)}
+.seg button[data-c=clients].on{background:var(--purple)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{border-radius:14px;padding:12px 14px;border:1px solid var(--line);background:#fff}
+.kpi .l{font-size:12px;color:var(--mute);font-weight:600}
+.kpi .v{font-size:22px;font-weight:800;margin-top:2px}
+.kpi.r .v{color:var(--red)}.kpi.g .v{color:var(--green)}.kpi.p .v{color:var(--purple)}.kpi.n .v{color:var(--navy)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px 14px}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:13px;font-weight:700;color:var(--ink)}
+.f label b{color:var(--red)}
+.f input,.f select{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;width:100%;min-height:44px}
+.f input:focus,.f select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.f.amt input{font-weight:800;font-size:18px;text-align:center}
+.f.hide{display:none}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:12px 22px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;min-height:46px}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn.danger{background:var(--red)}
+.btn.sm{padding:6px 12px;min-height:34px;font-size:13px;border-radius:9px}
+.btn:disabled{opacity:.5;cursor:wait}
+.status{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--navy-t);color:var(--navy);font-weight:600;font-size:14px}
+.status.ok{background:var(--green-t);color:var(--green)}
+.status.err{background:var(--red-t);color:var(--red)}
+.recent{margin-top:18px}
+.rrow{display:grid;grid-template-columns:70px 1fr auto auto;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line)}
+.rrow:last-child{border:0}
+.chip{font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;text-align:center}
+.chip.expenses{background:var(--red-t);color:var(--red)}.chip.revenues{background:var(--green-t);color:var(--green)}.chip.clients{background:var(--purple-t);color:var(--purple)}
+.rrow .d{color:var(--mute);font-size:12px}
+.rrow .a{font-weight:800}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.tools input,.tools select{border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;min-height:40px}
+.tools .grow{flex:1;min-width:160px}
+.sum{margin-inline-start:auto;font-weight:700;color:var(--navy);font-size:14px}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:68vh}
+table{border-collapse:collapse;width:100%;min-width:640px;background:#fff}
+th{position:sticky;top:0;background:var(--navy);color:#fff;font-size:13px;padding:10px 10px;text-align:right;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+tr:hover td{background:#FAFCFF}
+td.num,th.num{text-align:left;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+td.act{white-space:nowrap;text-align:left}
+.ib{background:none;border:0;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:15px}
+.ib:hover{background:var(--navy-t)}
+.empty{padding:30px;text-align:center;color:var(--mute)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){nav{order:3;flex-basis:100%}.hwrap{gap:8px}}
+@media(max-width:860px){.two{grid-template-columns:1fr}.rrow{grid-template-columns:62px 1fr auto}.rrow .d{display:none}}
+.bar{height:8px;background:var(--navy-t);border-radius:99px;overflow:hidden;min-width:70px}
+.bar i{display:block;height:100%;background:var(--navy)}
+tr.grp td{background:var(--navy-t);font-weight:800;color:var(--navy)}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal .box{background:#fff;border-radius:18px;padding:20px;width:min(640px,100%);max-height:92vh;overflow:auto}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 20px;border-radius:12px;z-index:99;font-weight:600;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+#login{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+#login .box{background:#fff;border-radius:20px;padding:28px;width:min(400px,100%)}
+#login h1{margin:0 0 4px;color:var(--navy)}
+.muted{color:var(--mute);font-size:13px}
+.hidden{display:none!important}
+.note{background:#FFF8E1;border:1px solid #F5D77A;border-radius:12px;padding:12px 14px;font-size:13.5px;margin-bottom:14px}
+canvas{max-height:300px}
+pre{background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;overflow:auto;direction:ltr;text-align:left;font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- =============== إعدادات Firebase ===============
+ املا البيانات دي من: Firebase Console > Project settings > Your apps > Web app > firebaseConfig
+ لو سيبتها فاضية الموقع بيشتغل في "وضع تجريبي" بيحفظ على الجهاز ده بس. -->
+<script>
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDYjn66sxmF5_lrQ3LqDZ8pjtOhALOaX6E",
+  authDomain: "infra-ing.firebaseapp.com",
+  projectId: "infra-ing",
+  storageBucket: "infra-ing.firebasestorage.app",
+  messagingSenderId: "737220119179",
+  appId: "1:737220119179:web:4b90bd5c4ba23528c9e28e"
+};
+</script>
+
+<div id="login" class="hidden">
+  <form class="box" id="loginForm">
+    <h1>INFRA</h1>
+    <p class="muted" style="margin:0 0 16px">سجّل دخول عشان تفتح النظام</p>
+    <div class="f" style="margin-bottom:10px"><label>الإيميل</label><input id="lEmail" type="email" autocomplete="username" required dir="ltr"></div>
+    <div class="f"><label>الباسورد</label><input id="lPass" type="password" autocomplete="current-password" required dir="ltr"></div>
+    <div id="lErr" class="status err hidden"></div>
+    <div class="actions"><button class="btn" style="background:var(--navy);width:100%" id="lBtn">دخول</button></div>
+  </form>
+</div>
+
+<header>
+  <div class="hwrap">
+    <div class="brand">INFRA<small>Engineering 2026 — الإدخال والمتابعة</small></div>
+    <nav id="nav"></nav>
+    <div class="who"><span class="badge" id="mode"></span><span id="who"></span><button class="linkbtn hidden" id="logout">خروج</button></div>
+  </div>
+</header>
+<main id="view"></main>
+<div id="toast"></div>
+
+<script type="module">
+/* ============================ ثوابت ============================ */
+const CATS=[
+ ['بنزين','السيارة'],['كارتة','السيارة'],['صيانة سيارة','السيارة'],
+ ['أدوات مكتبية','المكتب والتشغيل'],['كراسة شروط','المكتب والتشغيل'],['فواتير متنوعة','المكتب والتشغيل'],['أجهزة مكتب','المكتب والتشغيل'],['بوفية','المكتب والتشغيل'],['نت وموبيل','المكتب والتشغيل'],
+ ['غاز','المرافق والفواتير'],['كهرباء','المرافق والفواتير'],['فواتير شهرية','المرافق والفواتير'],
+ ['ضرايب','الضرائب والتأمينات'],['تأمينات اجتماعية','الضرائب والتأمينات'],['تأمينات مشاريع','الضرائب والتأمينات'],
+ ['علاج صحي','أخرى'],['فواتير اجتماعية','أخرى'],['تذاكر طيران','أخرى']];
+const GROUP_OF=Object.fromEntries(CATS);
+const SCHEMA={
+ expenses:{title:'مصروف',sheet:'المصروفات',color:'var(--red)',fields:[
+  {k:'date',l:'التاريخ',t:'date',req:1},
+  {k:'category',l:'التصنيف',t:'select',req:1},
+  {k:'desc',l:'البيان',t:'text',list:'dl_desc'},
+  {k:'amount',l:'المبلغ',t:'money',req:1},
+  {k:'note',l:'ملاحظات',t:'text'},
+  {k:'place',l:'مكان الصيانة',t:'text',showIf:v=>v.category==='صيانة سيارة'}]},
+ revenues:{title:'إيراد',sheet:'الإيرادات',color:'var(--green)',fields:[
+  {k:'date',l:'التاريخ',t:'date',req:1},
+  {k:'party',l:'الجهة (البيان)',t:'text',req:1,list:'dl_party'},
+  {k:'project',l:'عن مشروع',t:'text',list:'dl_proj'},
+  {k:'amount',l:'المبلغ',t:'money',req:1},
+  {k:'cheque',l:'رقم الشيك / التحويل',t:'text'},
+  {k:'invoice',l:'موقف الفاتورة الإلكترونية',t:'text'},
+  {k:'bank',l:'جهة الإيداع',t:'text',list:'dl_bank'}]},
+ clients:{title:'دفعة عميل',sheet:'العملاء الخارجيين',color:'var(--purple)',fields:[
+  {k:'date',l:'التاريخ',t:'date',req:1},
+  {k:'name',l:'اسم العميل',t:'text',req:1,list:'dl_client'},
+  {k:'project',l:'المشروع',t:'text',list:'dl_proj'},
+  {k:'amount',l:'المبلغ',t:'money',req:1},
+  {k:'note',l:'ملاحظات',t:'text'}]}};
+const TABLE_COLS={
+ expenses:[['date','التاريخ'],['category','التصنيف'],['desc','البيان'],['amount','المبلغ',1],['note','ملاحظات']],
+ revenues:[['date','التاريخ'],['party','الجهة'],['project','المشروع'],['amount','المبلغ',1],['cheque','شيك/تحويل'],['invoice','الفاتورة'],['bank','الإيداع']],
+ clients:[['date','التاريخ'],['name','العميل'],['project','المشروع'],['amount','المبلغ',1],['note','ملاحظات']]};
+const COLNAMES=['expenses','revenues','clients'];
+const VIEWS=[['entry','إدخال'],['expenses','المصروفات'],['revenues','الإيرادات'],['clients','العملاء'],['dash','الداشبورد'],['settings','الإعدادات']];
+
+/* ============================ أدوات ============================ */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:2});
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const num2en=s=>String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫]/g,'.').replace(/[٬،,\s]/g,'');
+const parseMoney=s=>{const n=parseFloat(num2en(s));return isFinite(n)?n:NaN};
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
+const uniqByFreq=a=>{const m=new Map();a.forEach(x=>{x=String(x||'').trim();if(x)m.set(x,(m.get(x)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1]).map(x=>x[0])};
+const sum=a=>a.reduce((s,x)=>s+(Number(x.amount)||0),0);
+
+/* ============================ طبقة البيانات ============================ */
+const cfg=window.FIREBASE_CONFIG||{};
+const FB=!!(cfg.apiKey&&cfg.projectId);
+let store;
+if(!FB){
+  const mem={};const subs={};
+  const load=c=>{try{return JSON.parse(localStorage.getItem('infra_v1_'+c)||'[]')}catch(e){return mem[c]||[]}};
+  const save=(c,a)=>{mem[c]=a;try{localStorage.setItem('infra_v1_'+c,JSON.stringify(a))}catch(e){}};
+  const emit=c=>(subs[c]||[]).forEach(f=>f(load(c).map(x=>({...x}))));
+  store={
+    mode:'demo',
+    subscribe(c,cb){(subs[c]=subs[c]||[]).push(cb);setTimeout(()=>cb(load(c)),0)},
+    async add(c,o){const a=load(c);const id='l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);a.push({...o,id});save(c,a);emit(c);return id},
+    async update(c,id,o){const a=load(c).map(x=>x.id===id?{...x,...o}:x);save(c,a);emit(c)},
+    async remove(c,id){save(c,load(c).filter(x=>x.id!==id));emit(c)},
+    async removeMany(c,ids){const s=new Set(ids);save(c,load(c).filter(x=>!s.has(x.id)));emit(c)},
+    async importRows(c,rows){const a=load(c);const idx=new Map(a.map((x,i)=>[x.id,i]));rows.forEach(r=>{if(idx.has(r.id))a[idx.get(r.id)]={...r};else a.push({...r})});save(c,a);emit(c)},
+    onAuth(cb){setTimeout(()=>cb({email:'وضع تجريبي'}),0)},
+    async signIn(){},async signOut(){},
+    resetLocal(){COLNAMES.forEach(c=>save(c,[]));COLNAMES.forEach(emit)}
+  };
+}else{
+  const V='10.12.2',B='https://www.gstatic.com/firebasejs/'+V+'/';
+  let appM,authM,fsM;
+  try{[appM,authM,fsM]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-auth.js'),import(B+'firebase-firestore.js')])}catch(e){document.body.innerHTML='<p style="padding:30px;font-family:Cairo,Tahoma;text-align:center">مقدرتش أحمّل Firebase — اتأكد من النت وجرب تاني.</p>';throw e}
+  const app=appM.initializeApp(cfg);
+  const auth=authM.getAuth(app);
+  let db;
+  try{db=fsM.initializeFirestore(app,{localCache:fsM.persistentLocalCache({tabManager:fsM.persistentMultipleTabManager()})})}catch(e){db=fsM.getFirestore(app)}
+  const chunks=(a,n)=>{const r=[];for(let i=0;i<a.length;i+=n)r.push(a.slice(i,i+n));return r};
+  store={
+    mode:'firebase',
+    subscribe(c,cb){fsM.onSnapshot(fsM.collection(db,c),s=>cb(s.docs.map(d=>({...d.data(),id:d.id}))),e=>{console.error(e);toast('مشكلة في الاتصال بالداتابيز: '+(e.code||e.message))})},
+    async add(c,o){const r=await fsM.addDoc(fsM.collection(db,c),{...o,by:auth.currentUser?.email||''});return r.id},
+    async update(c,id,o){await fsM.updateDoc(fsM.doc(db,c,id),o)},
+    async remove(c,id){await fsM.deleteDoc(fsM.doc(db,c,id))},
+    async removeMany(c,ids){for(const ch of chunks(ids,400)){const b=fsM.writeBatch(db);ch.forEach(id=>b.delete(fsM.doc(db,c,id)));await b.commit()}},
+    async importRows(c,rows){for(const ch of chunks(rows,400)){const b=fsM.writeBatch(db);ch.forEach(r=>{const {id,...rest}=r;b.set(fsM.doc(db,c,id),{...rest,by:'import'})});await b.commit()}},
+    onAuth(cb){authM.onAuthStateChanged(auth,u=>cb(u?{email:u.email}:null))},
+    async signIn(e,p){await authM.signInWithEmailAndPassword(auth,e,p)},
+    async signOut(){await authM.signOut(auth)}
+  };
+}
+
+/* ============================ الحالة ============================ */
+const data={expenses:[],revenues:[],clients:[]};
+let user=null,view=location.hash.slice(1)||'entry',entryCol='expenses';
+const ui={q:'',month:'',cat:'',limit:200,period:''};
+const sortRows=a=>a.slice().sort((x,y)=>(y.date||'').localeCompare(x.date||'')||(y.t||0)-(x.t||0));
+
+/* ============================ قوائم الاقتراحات ============================ */
+function ensureDL(id){let d=document.getElementById(id);if(!d){d=document.createElement('datalist');d.id=id;document.body.appendChild(d)}return d}
+function fillDL(id,arr){ensureDL(id).innerHTML=arr.slice(0,400).map(x=>'<option value="'+esc(x)+'">').join('')}
+function refreshLists(){
+  fillDL('dl_party',uniqByFreq(data.revenues.map(x=>x.party)));
+  fillDL('dl_proj',uniqByFreq([...data.revenues.map(x=>x.project),...data.clients.map(x=>x.project)]));
+  fillDL('dl_bank',uniqByFreq(data.revenues.map(x=>x.bank)));
+  fillDL('dl_client',uniqByFreq(data.clients.map(x=>x.name)));
+  refreshDesc($('#f_category')?.value);
+}
+function refreshDesc(cat){fillDL('dl_desc',uniqByFreq(data.expenses.filter(x=>!cat||x.category===cat).map(x=>x.desc)))}
+function allCategories(){const extra=uniqByFreq(data.expenses.map(x=>x.category)).filter(c=>!GROUP_OF[c]);return [...CATS.map(c=>c[0]),...extra]}
+
+/* ============================ نموذج عام ============================ */
+function buildForm(col,vals,{onSubmit,submitLabel,onCancel,idp}){
+  const sc=SCHEMA[col];idp=idp||'f_';
+  const f=document.createElement('form');f.autocomplete='off';
+  f.style.setProperty('--accent',sc.color);
+  f.innerHTML='<div class="grid">'+sc.fields.map(fl=>{
+    let inp;
+    if(fl.t==='select')inp='<select id="'+idp+fl.k+'"><option value="">— اختار —</option>'+allCategories().map(c=>'<option'+(vals[fl.k]===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select>';
+    else if(fl.t==='date')inp='<input id="'+idp+fl.k+'" type="date" value="'+esc(vals[fl.k]||'')+'">';
+    else if(fl.t==='money')inp='<input id="'+idp+fl.k+'" type="text" inputmode="decimal" placeholder="0.00" value="'+esc(vals[fl.k]??'')+'">';
+    else inp='<input id="'+idp+fl.k+'" type="text"'+(fl.list?' list="'+fl.list+'"':'')+' value="'+esc(vals[fl.k]??'')+'">';
+    return '<div class="f'+(fl.t==='money'?' amt':'')+'" data-k="'+fl.k+'"><label>'+fl.l+(fl.req?' <b>*</b>':'')+'</label>'+inp+'</div>';
+  }).join('')+'</div><div class="status hidden" data-st></div><div class="actions"><button class="btn" data-sub>'+submitLabel+'</button>'+(onCancel?'<button type="button" class="btn ghost" data-cancel>إلغاء</button>':'')+'</div>';
+  const get=()=>{const v={};sc.fields.forEach(fl=>{const el=f.querySelector('#'+idp+fl.k);v[fl.k]=el?el.value.trim():''});return v};
+  const toggle=()=>{const v=get();sc.fields.forEach(fl=>{if(fl.showIf){f.querySelector('[data-k='+fl.k+']').classList.toggle('hide',!fl.showIf(v))}})};
+  toggle();
+  const cat=f.querySelector('#'+idp+'category');
+  if(cat)cat.addEventListener('change',()=>{toggle();refreshDesc(cat.value)});
+  f.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const v=get(),st=f.querySelector('[data-st]');
+    const err=(m,k)=>{st.className='status err';st.textContent=m;st.classList.remove('hidden');f.querySelector('#'+idp+k)?.focus()};
+    for(const fl of sc.fields){
+      if(fl.showIf&&!fl.showIf(v))v[fl.k]='';
+      if(fl.req&&!v[fl.k])return err('لازم تملا: '+fl.l,fl.k);
+    }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(v.date))return err('اكتب تاريخ صحيح','date');
+    const a=parseMoney(v.amount);
+    if(!(a>0))return err('اكتب مبلغ صحيح أكبر من صفر','amount');
+    v.amount=Math.round(a*100)/100;
+    const b=f.querySelector('[data-sub]');b.disabled=true;
+    try{await onSubmit(v,f,st)}catch(ex){console.error(ex);err('ماتسجلش — '+(ex.code||ex.message||'مشكلة في الحفظ'),'date')}
+    b.disabled=false;
+  });
+  f.querySelector('[data-cancel]')?.addEventListener('click',onCancel);
+  return f;
+}
+
+/* ============================ صفحة الإدخال ============================ */
+function renderEntry(){
+  const v=$('#view');
+  v.innerHTML='<div class="kpis" id="ekpi"></div><div class="seg">'+COLNAMES.map(c=>'<button data-c="'+c+'" class="'+(c===entryCol?'on':'')+'">'+({expenses:'مصروف',revenues:'إيراد',clients:'عميل خارجي'})[c]+'<small>'+({expenses:'يتسجل في المصروفات',revenues:'يتسجل في الإيرادات',clients:'يتسجل في العملاء'})[c]+'</small></button>').join('')+'</div><div class="card" id="eform"></div><div class="card recent"><h3>آخر العمليات اللي اتسجلت</h3><div id="recent"></div></div>';
+  v.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{entryCol=b.dataset.c;renderEntry()});
+  mountEntryForm();renderEntryKpi();renderRecent();
+}
+const lastKeep={};
+function mountEntryForm(){
+  const col=entryCol,sc=SCHEMA[col],box=$('#eform');if(!box)return;
+  box.style.setProperty('--accent',sc.color);
+  const init={date:lastKeep[col+'date']||today(),category:lastKeep.category||''};
+  box.innerHTML='<h2 style="color:'+sc.color+'">تسجيل '+sc.title+'</h2>';
+  const f=buildForm(col,init,{submitLabel:'تسجيل '+sc.title,onSubmit:async(v,form,st)=>{
+    await store.add(col,{...v,t:Date.now()});
+    lastKeep[col+'date']=v.date;if(col==='expenses')lastKeep.category=v.category;
+    const keep=['date'].concat(col==='expenses'?['category']:[]);
+    sc.fields.forEach(fl=>{if(!keep.includes(fl.k)){const el=form.querySelector('#f_'+fl.k);if(el)el.value=''}});
+    st.className='status ok';st.textContent='تم تسجيل '+sc.title+' '+fmt(v.amount)+' ج.م في '+sc.sheet+'  ✓';st.classList.remove('hidden');
+    toast('تم التسجيل ✓');
+    const first=sc.fields.find(fl=>!keep.includes(fl.k)&&fl.t!=='select');
+    form.querySelector('#f_'+(col==='expenses'?'desc':first.k))?.focus();
+  }});
+  box.appendChild(f);
+}
+function renderEntryKpi(){
+  const k=$('#ekpi');if(!k)return;
+  const exp=sum(data.expenses)+sum(data.clients),rev=sum(data.revenues);
+  k.innerHTML='<div class="kpi g"><div class="l">إجمالي الإيرادات</div><div class="v">'+fmt(rev)+'</div></div><div class="kpi r"><div class="l">إجمالي المصروفات (شامل العملاء الخارجيين)</div><div class="v">'+fmt(exp)+'</div></div><div class="kpi n"><div class="l">الصافي</div><div class="v">'+fmt(rev-exp)+'</div></div><div class="kpi p"><div class="l">مدفوع لعملاء خارجين</div><div class="v">'+fmt(sum(data.clients))+'</div></div>';
+}
+function renderRecent(){
+  const r=$('#recent');if(!r)return;
+  const rows=[];COLNAMES.forEach(c=>data[c].forEach(x=>{if(x.t)rows.push({c,x})}));
+  rows.sort((a,b)=>b.x.t-a.x.t);
+  r.innerHTML=rows.length?rows.slice(0,12).map(({c,x})=>{
+    const name=c==='expenses'?(x.desc||x.category):c==='revenues'?x.party:x.name;
+    const where=c==='expenses'?x.category:SCHEMA[c].sheet;
+    return '<div class="rrow"><span class="chip '+c+'">'+SCHEMA[c].title+'</span><span>'+esc(name)+' <span class="d">· '+esc(where)+' · '+esc(x.date)+'</span></span><span class="a">'+fmt(x.amount)+'</span><button class="ib" title="حذف" data-del="'+c+'|'+x.id+'">🗑</button></div>';
+  }).join(''):'<div class="empty">لسه ما سجلتش حاجة من الصفحة دي</div>';
+  r.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delRow(...b.dataset.del.split('|')));
+}
+async function delRow(c,id){
+  if(!confirm('متأكد إنك عايز تمسح العملية دي؟'))return;
+  try{await store.remove(c,id);toast('اتمسحت')}catch(e){toast('ماتمسحتش: '+(e.code||e.message))}
+}
+
+/* ============================ الجداول ============================ */
+function renderTable(col){
+  const sc=SCHEMA[col];
+  const months=[...new Set(data[col].map(x=>(x.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  $('#view').innerHTML='<div class="card"><h2 style="color:'+sc.color+'">'+sc.sheet+'</h2><div class="tools"><input class="grow" id="q" placeholder="بحث..." value="'+esc(ui.q)+'"><select id="mo"><option value="">كل الشهور</option>'+months.map(m=>'<option'+(m===ui.month?' selected':'')+'>'+m+'</option>').join('')+'</select>'+(col==='expenses'?'<select id="ct"><option value="">كل التصنيفات</option>'+allCategories().map(c=>'<option'+(c===ui.cat?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select>':'')+'<button class="btn ghost sm" id="csv">تصدير CSV</button><button class="btn sm" id="addnew" style="background:'+sc.color+'">+ إضافة</button><span class="sum" id="tsum"></span></div><div class="tw" id="tbl"></div></div>';
+  $('#q').oninput=e=>{ui.q=e.target.value;ui.limit=200;tableBody(col)};
+  $('#mo').onchange=e=>{ui.month=e.target.value;ui.limit=200;tableBody(col)};
+  $('#ct')&&($('#ct').onchange=e=>{ui.cat=e.target.value;ui.limit=200;tableBody(col)});
+  $('#csv').onclick=()=>exportCSV(col);
+  $('#addnew').onclick=()=>{entryCol=col;go('entry')};
+  tableBody(col);
+}
+function filtered(col){
+  const q=ui.q.trim().toLowerCase();
+  return sortRows(data[col]).filter(x=>(!ui.month||(x.date||'').startsWith(ui.month))&&(col!=='expenses'||!ui.cat||x.category===ui.cat)&&(!q||Object.values(x).some(v=>String(v).toLowerCase().includes(q))));
+}
+function tableBody(col){
+  const t=$('#tbl');if(!t)return;
+  const rows=filtered(col),cols=TABLE_COLS[col];
+  $('#tsum').textContent=rows.length+' عملية — الإجمالي '+fmt(sum(rows))+' ج.م';
+  if(!rows.length){t.innerHTML='<div class="empty">مفيش بيانات مطابقة</div>';return}
+  const shown=rows.slice(0,ui.limit);
+  t.innerHTML='<table><thead><tr>'+cols.map(c=>'<th class="'+(c[2]?'num':'')+'">'+c[1]+'</th>').join('')+'<th></th></tr></thead><tbody>'+shown.map(x=>'<tr>'+cols.map(c=>{
+    let val=x[c[0]];
+    if(c[0]==='note'&&x.place)val=(val?val+' — ':'')+'مكان: '+x.place;
+    return '<td class="'+(c[2]?'num':'')+'">'+(c[2]?fmt(val):esc(val))+'</td>';
+  }).join('')+'<td class="act"><button class="ib" title="تعديل" data-ed="'+x.id+'">✏️</button><button class="ib" title="حذف" data-rm="'+x.id+'">🗑</button></td></tr>').join('')+'</tbody></table>'+(rows.length>shown.length?'<div class="empty"><button class="btn ghost sm" id="more">عرض المزيد ('+(rows.length-shown.length)+')</button></div>':'');
+  t.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editRow(col,b.dataset.ed));
+  t.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>delRow(col,b.dataset.rm));
+  $('#more')?.addEventListener('click',()=>{ui.limit+=300;tableBody(col)});
+}
+function editRow(col,id){
+  const x=data[col].find(r=>r.id===id);if(!x)return;
+  const m=document.createElement('div');m.className='modal';
+  m.innerHTML='<div class="box"><h2>تعديل '+SCHEMA[col].title+'</h2></div>';
+  const f=buildForm(col,x,{idp:'e_',submitLabel:'حفظ التعديل',onCancel:()=>m.remove(),onSubmit:async v=>{await store.update(col,id,v);m.remove();toast('اتحفظ التعديل ✓')}});
+  m.firstChild.appendChild(f);
+  m.addEventListener('click',e=>{if(e.target===m)m.remove()});
+  document.body.appendChild(m);
+}
+function exportCSV(col){
+  const cols=TABLE_COLS[col];
+  const rows=filtered(col).map(x=>cols.map(c=>'"'+String(c[0]==='note'&&x.place?(x.note?x.note+' — ':'')+'مكان: '+x.place:(x[c[0]]??'')).replace(/"/g,'""')+'"').join(','));
+  download('﻿'+cols.map(c=>c[1]).join(',')+'\n'+rows.join('\n'),'infra-'+col+'-'+today()+'.csv','text/csv;charset=utf-8');
+}
+function download(text,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+
+/* ============================ الداشبورد ============================ */
+function renderDash(){
+  const all=[...data.expenses,...data.revenues,...data.clients];
+  const ms=[...new Set(all.map(x=>(x.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  const ys=[...new Set(ms.map(m=>m.slice(0,4)))];
+  $('#view').innerHTML='<div class="tools"><h2 style="margin:0">الداشبورد</h2><select id="per" style="margin-inline-start:auto"><option value="">كل الفترات</option>'+ys.map(y=>'<option value="'+y+'"'+(ui.period===y?' selected':'')+'>سنة '+y+'</option>').join('')+ms.map(m=>'<option'+(ui.period===m?' selected':'')+'>'+m+'</option>').join('')+'</select></div><div class="kpis" id="dk"></div><div class="card" style="margin-bottom:16px"><h3>الإيرادات والمصروفات شهرياً</h3><div id="mchart"></div></div><div class="two"><div class="card"><h3>المصروفات حسب التصنيف</h3><div class="tw" id="bycat"></div></div><div><div class="card" style="margin-bottom:16px"><h3>الإيرادات حسب جهة الإيداع</h3><div id="bybank"></div></div><div class="card"><h3>أعلى الجهات إيراداً</h3><div id="byparty"></div></div></div></div>';
+  $('#per').onchange=e=>{ui.period=e.target.value;dashBody()};
+  dashBody();
+}
+function dashBody(){
+  const inP=x=>!ui.period||(x.date||'').startsWith(ui.period);
+  const E=data.expenses.filter(inP),R=data.revenues.filter(inP),C=data.clients.filter(inP);
+  const te=sum(E)+sum(C),tr=sum(R);
+  $('#dk').innerHTML='<div class="kpi g"><div class="l">الإيرادات</div><div class="v">'+fmt(tr)+'</div></div><div class="kpi r"><div class="l">المصروفات (شامل العملاء)</div><div class="v">'+fmt(te)+'</div></div><div class="kpi n"><div class="l">الصافي</div><div class="v">'+fmt(tr-te)+'</div></div><div class="kpi n"><div class="l">نسبة المصروفات من الإيراد</div><div class="v">'+(tr?Math.round(te/tr*100)+'%':'—')+'</div></div><div class="kpi p"><div class="l">عدد العمليات</div><div class="v">'+(E.length+R.length+C.length)+'</div></div>';
+  // categories
+  const groups={};
+  E.forEach(x=>{const g=GROUP_OF[x.category]||'أخرى';((groups[g]=groups[g]||{})[x.category||'غير مصنف']=(groups[g][x.category||'غير مصنف']||0)+x.amount)});
+  if(C.length)groups['عملاء خارجين']={'دفعات العملاء':sum(C)};
+  const order=['السيارة','المكتب والتشغيل','المرافق والفواتير','الضرائب والتأمينات','أخرى','عملاء خارجين'];
+  let h='<table><thead><tr><th>التصنيف</th><th class="num">الإجمالي</th><th>النسبة</th></tr></thead><tbody>';
+  order.filter(g=>groups[g]).forEach(g=>{
+    const gt=Object.values(groups[g]).reduce((a,b)=>a+b,0);
+    h+='<tr class="grp"><td>'+g+'</td><td class="num">'+fmt(gt)+'</td><td>'+(te?Math.round(gt/te*100):0)+'%</td></tr>';
+    Object.entries(groups[g]).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>h+='<tr><td>'+esc(k)+'</td><td class="num">'+fmt(v)+'</td><td><div class="bar"><i style="width:'+(te?v/te*100:0)+'%"></i></div></td></tr>');
+  });
+  $('#bycat').innerHTML=te?h+'</tbody></table>':'<div class="empty">مفيش بيانات</div>';
+  const listBy=(rows,k)=>{const m=new Map();rows.forEach(x=>{const n=(x[k]||'غير محدد');m.set(n,(m.get(n)||0)+x.amount)});return [...m].sort((a,b)=>b[1]-a[1])};
+  const bar=(arr,total)=>arr.length?arr.map(([n,v])=>'<div class="rrow" style="grid-template-columns:1fr 90px auto"><span>'+esc(n)+'</span><div class="bar"><i style="width:'+(total?v/total*100:0)+'%;background:var(--green)"></i></div><span class="a">'+fmt(v)+'</span></div>').join(''):'<div class="empty">مفيش بيانات</div>';
+  $('#bybank').innerHTML=bar(listBy(R,'bank'),tr);
+  $('#byparty').innerHTML=bar(listBy(R,'party').slice(0,8),tr);
+  // monthly bars (no external library)
+  const mm=[...new Set([...E,...R,...C].map(x=>(x.date||'').slice(0,7)).filter(Boolean))].sort();
+  const by=(rows,m)=>sum(rows.filter(x=>(x.date||'').startsWith(m)));
+  const vals=mm.map(m=>[m,by(R,m),by(E,m)+by(C,m)]);
+  const mx=Math.max(1,...vals.map(v=>Math.max(v[1],v[2])));
+  $('#mchart').innerHTML=vals.length?'<div style="display:flex;gap:16px;font-size:12px;margin-bottom:8px"><span style="color:var(--green)">■ إيرادات</span><span style="color:var(--red)">■ مصروفات (شامل العملاء)</span></div>'+vals.map(([m,r,e])=>'<div style="display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:center;margin:7px 0"><b style="font-size:13px;color:var(--navy)">'+m+'</b><div><div style="display:flex;align-items:center;gap:8px"><div style="height:11px;border-radius:6px;background:var(--green);width:'+(r/mx*70)+'%;min-width:2px"></div><span style="font-size:12px;font-weight:700">'+fmt(r)+'</span></div><div style="display:flex;align-items:center;gap:8px;margin-top:3px"><div style="height:11px;border-radius:6px;background:var(--red);width:'+(e/mx*70)+'%;min-width:2px"></div><span style="font-size:12px;font-weight:700">'+fmt(e)+'</span></div></div></div>').join(''):'<div class="empty">مفيش بيانات</div>';
+}
+
+/* ============================ الإعدادات ============================ */
+function renderSettings(){
+  const counts=COLNAMES.map(c=>SCHEMA[c].sheet+': '+data[c].length).join(' — ');
+  $('#view').innerHTML='<div class="card" style="margin-bottom:16px"><h2>حالة النظام</h2>'+(FB?'<p>متصل بـ Firebase (مشروع <b dir="ltr">'+esc(cfg.projectId)+'</b>). البيانات مشتركة بين كل الأجهزة.</p>':'<div class="note"><b>وضع تجريبي:</b> البيانات بتتحفظ على الجهاز ده بس. عشان تشتغل من أكتر من جهاز املا <code dir="ltr">FIREBASE_CONFIG</code> في أول ملف index.html.</div>')+'<p class="muted" id="cnt">'+counts+'</p></div>'
+  +'<div class="card" style="margin-bottom:16px"><h2>استيراد بيانات الإكسيل</h2><p class="muted">اختار ملف <b dir="ltr">infra-data.json</b>. الاستيراد آمن لو اتعمل مرتين (مش بيكرر العمليات).</p><input type="file" id="imp" accept=".json,application/json"><div class="status hidden" id="impst"></div><div class="actions"><button class="btn ghost danger sm" id="delimp" style="color:#fff">حذف البيانات المستوردة فقط</button></div></div>'
+  +'<div class="card"><h2>نسخة احتياطية</h2><p class="muted">تنزيل كل البيانات في ملف JSON.</p><div class="actions"><button class="btn ghost" id="bk">تنزيل نسخة احتياطية</button>'+(FB?'':'<button class="btn danger" id="reset">مسح بيانات الوضع التجريبي</button>')+'</div></div>';
+  $('#imp').onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    const st=$('#impst');st.classList.remove('hidden');st.className='status';
+    try{
+      const j=JSON.parse(await file.text());
+      const n=COLNAMES.map(c=>(j[c]||[]).length);
+      if(!n.some(x=>x>0))throw new Error('الملف مش بصيغة صحيحة');
+      if(!confirm('هيتم استيراد '+n[0]+' مصروف و '+n[1]+' إيراد و '+n[2]+' دفعة عميل. نكمل؟'))return;
+      for(let i=0;i<3;i++){st.textContent='جاري استيراد '+SCHEMA[COLNAMES[i]].sheet+'...';await store.importRows(COLNAMES[i],(j[COLNAMES[i]]||[]).map(r=>{const {src,...x}=r;if(!x.id)throw new Error('الملف ناقص معرّفات');return x}))}
+      st.className='status ok';st.textContent='تم الاستيراد بنجاح ✓';
+    }catch(ex){st.className='status err';st.textContent='فشل الاستيراد: '+(ex.code||ex.message)}
+    e.target.value='';
+  };
+  $('#delimp').onclick=async()=>{
+    const ids=COLNAMES.map(c=>[c,data[c].filter(x=>String(x.id).startsWith('imp-')).map(x=>x.id)]);
+    const tot=ids.reduce((s,x)=>s+x[1].length,0);
+    if(!tot)return toast('مفيش بيانات مستوردة');
+    if(!confirm('هيتم حذف '+tot+' عملية مستوردة. متأكد؟'))return;
+    for(const [c,a] of ids)if(a.length)await store.removeMany(c,a);
+    toast('تم الحذف');
+  };
+  $('#bk').onclick=()=>download(JSON.stringify({version:1,exportedAt:new Date().toISOString(),...data},null,1),'infra-backup-'+today()+'.json','application/json');
+  $('#reset')&&($('#reset').onclick=()=>{if(confirm('هيتم مسح كل بيانات الوضع التجريبي. متأكد؟')){store.resetLocal();toast('تم المسح')}});
+}
+
+/* ============================ التنقل والتشغيل ============================ */
+function go(v){view=v;location.hash=v;render()}
+function renderNav(){
+  $('#nav').innerHTML=VIEWS.map(([k,l])=>'<button data-v="'+k+'" class="'+(k===view?'on':'')+'">'+l+'</button>').join('');
+  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+}
+function render(){
+  renderNav();
+  if(view==='entry')renderEntry();
+  else if(COLNAMES.includes(view)){ui.limit=200;renderTable(view)}
+  else if(view==='dash')renderDash();
+  else renderSettings();
+  refreshLists();
+  scrollTo(0,0);
+}
+function onData(c){
+  refreshLists();
+  if(view==='entry'){renderEntryKpi();renderRecent();const cs=$('#f_category');if(cs&&cs.options.length-1!==allCategories().length){const cur=cs.value;mountEntryForm();const n=$('#f_category');if(n)n.value=cur}}
+  else if(view===c)tableBody(c);
+  else if(view==='dash')dashBody();
+  else if(view==='settings'){const c=$('#cnt');if(c)c.textContent=COLNAMES.map(k=>SCHEMA[k].sheet+': '+data[k].length).join(' — ')}
+}
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&h!==view&&VIEWS.some(v=>v[0]===h)){view=h;render()}});
+$('#mode').textContent=FB?'متصل':'وضع تجريبي';$('#mode').className='badge'+(FB?'':' demo');
+$('#logout').onclick=()=>store.signOut();
+$('#loginForm').onsubmit=async e=>{
+  e.preventDefault();const er=$('#lErr');er.classList.add('hidden');$('#lBtn').disabled=true;
+  try{await store.signIn($('#lEmail').value.trim(),$('#lPass').value)}catch(ex){er.textContent='الإيميل أو الباسورد غلط';er.classList.remove('hidden')}
+  $('#lBtn').disabled=false;
+};
+let started=false;
+store.onAuth(u=>{
+  user=u;
+  $('#login').classList.toggle('hidden',!!u);
+  $('#who').textContent=u?u.email:'';
+  $('#logout').classList.toggle('hidden',!(u&&FB));
+  if(u&&!started){
+    started=true;
+    COLNAMES.forEach(c=>store.subscribe(c,rows=>{data[c]=rows;onData(c)}));
+    render();
+  }
+});
+</script>
+</body>
+</html>
