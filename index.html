@@ -203,7 +203,9 @@ const SCHEMA={
   {k:'amount',l:'المبلغ',t:'money',req:1},
   {k:'cheque',l:'رقم الشيك / التحويل',t:'text'},
   {k:'invoice',l:'موقف الفاتورة الإلكترونية',t:'text'},
-  {k:'bank',l:'جهة الإيداع',t:'text',list:'dl_bank'}]},
+  {k:'bank',l:'جهة الإيداع',t:'text',list:'dl_bank'},
+  {k:'chkF',l:'ملف الشيك (PDF أو صورة)',t:'file'},
+  {k:'invF',l:'ملف الفاتورة الإلكترونية (PDF أو صورة)',t:'file'}]},
  clients:{title:'دفعة عميل',sheet:'العملاء الخارجيين',color:'var(--purple)',fields:[
   {k:'date',l:'التاريخ',t:'date',req:1},
   {k:'name',l:'اسم العميل',t:'text',req:1,list:'dl_client'},
@@ -212,7 +214,7 @@ const SCHEMA={
   {k:'note',l:'ملاحظات',t:'text'}]}};
 const TABLE_COLS={
  expenses:[['date','التاريخ'],['category','التصنيف'],['desc','البيان'],['amount','المبلغ',1],['note','ملاحظات']],
- revenues:[['date','التاريخ'],['party','الجهة'],['project','المشروع'],['amount','المبلغ',1],['cheque','شيك/تحويل'],['invoice','الفاتورة'],['bank','الإيداع']],
+ revenues:[['date','التاريخ'],['party','الجهة'],['project','المشروع'],['amount','المبلغ',1],['cheque','شيك/تحويل'],['invoice','الفاتورة'],['bank','الإيداع'],['chkF','📎 الشيك',0,1],['invF','📎 الفاتورة',0,1]],
  clients:[['date','التاريخ'],['name','العميل'],['project','المشروع'],['amount','المبلغ',1],['note','ملاحظات']]};
 const COLNAMES=['expenses','revenues','clients'];
 const ICONS={entry:'✍️',expenses:'💸',revenues:'💰',clients:'👥',dash:'📊',fin:'📒',settings:'⚙️'};
@@ -246,6 +248,9 @@ if(!FB){
     async remove(c,id){save(c,load(c).filter(x=>x.id!==id));emit(c)},
     async removeMany(c,ids){const s=new Set(ids);save(c,load(c).filter(x=>!s.has(x.id)));emit(c)},
     async importRows(c,rows){const a=load(c);const idx=new Map(a.map((x,i)=>[x.id,i]));rows.forEach(r=>{if(idx.has(r.id))a[idx.get(r.id)]={...r};else a.push({...r})});save(c,a);emit(c)},
+    async putFile(file){const fid='f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);const url=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)});let m={};try{m=JSON.parse(localStorage.getItem('infra_v1_files')||'{}')}catch(e){}m[fid]=url;try{localStorage.setItem('infra_v1_files',JSON.stringify(m))}catch(e){throw new Error('مساحة التخزين التجريبي ممتلئة')}return {fid,n:1,name:file.name,size:file.size,type:file.type}},
+    async getFile(meta){const m=JSON.parse(localStorage.getItem('infra_v1_files')||'{}');return await (await fetch(m[meta.fid])).blob()},
+    async delFile(meta){try{const m=JSON.parse(localStorage.getItem('infra_v1_files')||'{}');delete m[meta.fid];localStorage.setItem('infra_v1_files',JSON.stringify(m))}catch(e){}},
     onAuth(cb){setTimeout(()=>cb({email:'وضع تجريبي'}),0)},
     async signIn(){},async signOut(){},
     resetLocal(){COLNAMES.forEach(c=>save(c,[]));COLNAMES.forEach(emit)}
@@ -267,6 +272,20 @@ if(!FB){
     async remove(c,id){await fsM.deleteDoc(fsM.doc(db,c,id))},
     async removeMany(c,ids){for(const ch of chunks(ids,400)){const b=fsM.writeBatch(db);ch.forEach(id=>b.delete(fsM.doc(db,c,id)));await b.commit()}},
     async importRows(c,rows){for(const ch of chunks(rows,400)){const b=fsM.writeBatch(db);ch.forEach(r=>{const {id,...rest}=r;b.set(fsM.doc(db,c,id),{...rest,by:'import'})});await b.commit()}},
+    async putFile(file){
+      const fid='f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=rej;r.readAsDataURL(file)});
+      const parts=[];for(let i=0;i<b64.length;i+=700000)parts.push(b64.slice(i,i+700000));
+      for(let i=0;i<parts.length;i++)await fsM.setDoc(fsM.doc(db,'files',fid+'_'+i),{fid,i,n:parts.length,data:parts[i],by:auth.currentUser?.email||''});
+      return {fid,n:parts.length,name:file.name,size:file.size,type:file.type||'application/pdf'};
+    },
+    async getFile(meta){
+      const ds=await Promise.all(Array.from({length:meta.n},(_,i)=>fsM.getDoc(fsM.doc(db,'files',meta.fid+'_'+i))));
+      const bin=ds.map(d=>atob(d.data().data)).join('');
+      const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+      return new Blob([u],{type:meta.type||'application/pdf'});
+    },
+    async delFile(meta){for(let i=0;i<meta.n;i++)await fsM.deleteDoc(fsM.doc(db,'files',meta.fid+'_'+i))},
     onAuth(cb){authM.onAuthStateChanged(auth,u=>cb(u?{email:u.email}:null))},
     async signIn(e,p){await authM.signInWithEmailAndPassword(auth,e,p)},
     async signOut(){await authM.signOut(auth)}
@@ -300,12 +319,13 @@ function buildForm(col,vals,{onSubmit,submitLabel,onCancel,idp}){
   f.innerHTML='<div class="grid">'+sc.fields.map(fl=>{
     let inp;
     if(fl.t==='select')inp='<select id="'+idp+fl.k+'"><option value="">— اختار —</option>'+allCategories().map(c=>'<option'+(vals[fl.k]===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select>';
+    else if(fl.t==='file'){const cur=vals[fl.k];inp='<input id="'+idp+fl.k+'" type="file" accept="application/pdf,image/*">'+(cur&&cur.fid?'<div class="muted" style="margin-top:4px">الملف الحالي: <b>'+esc(cur.name)+'</b> — <label style="font-weight:400"><input type="checkbox" data-rmf="'+fl.k+'" style="width:auto;min-height:0"> إزالة</label> (أو اختار ملف جديد يستبدله)</div>':'')}
     else if(fl.t==='date')inp='<input id="'+idp+fl.k+'" type="date" value="'+esc(vals[fl.k]||'')+'">';
     else if(fl.t==='money')inp='<input id="'+idp+fl.k+'" type="text" inputmode="decimal" placeholder="0.00" value="'+esc(vals[fl.k]??'')+'">';
     else inp='<input id="'+idp+fl.k+'" type="text"'+(fl.list?' list="'+fl.list+'"':'')+' value="'+esc(vals[fl.k]??'')+'">';
     return '<div class="f'+(fl.t==='money'?' amt':'')+'" data-k="'+fl.k+'"><label>'+fl.l+(fl.req?' <b>*</b>':'')+'</label>'+inp+'</div>';
   }).join('')+'</div><div class="status hidden" data-st></div><div class="actions"><button class="btn" data-sub>'+submitLabel+'</button>'+(onCancel?'<button type="button" class="btn ghost" data-cancel>إلغاء</button>':'')+'</div>';
-  const get=()=>{const v={};sc.fields.forEach(fl=>{const el=f.querySelector('#'+idp+fl.k);v[fl.k]=el?el.value.trim():''});return v};
+  const get=()=>{const v={};sc.fields.forEach(fl=>{if(fl.t==='file')return;const el=f.querySelector('#'+idp+fl.k);v[fl.k]=el?el.value.trim():''});return v};
   const toggle=()=>{const v=get();sc.fields.forEach(fl=>{if(fl.showIf){f.querySelector('[data-k='+fl.k+']').classList.toggle('hide',!fl.showIf(v))}})};
   toggle();
   const cat=f.querySelector('#'+idp+'category');
@@ -322,8 +342,19 @@ function buildForm(col,vals,{onSubmit,submitLabel,onCancel,idp}){
     const a=parseMoney(v.amount);
     if(!(a>0))return err('اكتب مبلغ صحيح أكبر من صفر','amount');
     v.amount=Math.round(a*100)/100;
+    const fileFields=sc.fields.filter(fl=>fl.t==='file');
+    for(const fl of fileFields){const el=f.querySelector('#'+idp+fl.k);if(el&&el.files[0]&&el.files[0].size>6*1024*1024)return err('الملف أكبر من 6 ميجا: '+el.files[0].name,fl.k)}
     const b=f.querySelector('[data-sub]');b.disabled=true;
-    try{await onSubmit(v,f,st)}catch(ex){console.error(ex);err('ماتسجلش — '+(ex.code||ex.message||'مشكلة في الحفظ'),'date')}
+    try{
+      const old=[];
+      for(const fl of fileFields){
+        const el=f.querySelector('#'+idp+fl.k),cur=vals[fl.k],rm=f.querySelector('[data-rmf='+fl.k+']');
+        if(el&&el.files[0]){st.className='status';st.textContent='جاري رفع الملف: '+el.files[0].name+' ...';st.classList.remove('hidden');v[fl.k]=await store.putFile(el.files[0]);if(cur&&cur.fid)old.push(cur)}
+        else if(rm&&rm.checked){v[fl.k]=null;if(cur&&cur.fid)old.push(cur)}
+      }
+      await onSubmit(v,f,st);
+      old.forEach(m=>store.delFile(m).catch(()=>{}));
+    }catch(ex){console.error(ex);err('ماتسجلش — '+(ex.code||ex.message||'مشكلة في الحفظ'),'date')}
     b.disabled=false;
   });
   f.querySelector('[data-cancel]')?.addEventListener('click',onCancel);
@@ -345,6 +376,7 @@ function mountEntryForm(){
   box.innerHTML='<h2 style="color:'+sc.color+'">تسجيل '+sc.title+'</h2>';
   const f=buildForm(col,init,{submitLabel:'تسجيل '+sc.title,onSubmit:async(v,form,st)=>{
     await store.add(col,{...v,t:Date.now()});
+    form.querySelectorAll('input[type=file]').forEach(i=>i.value='');
     lastKeep[col+'date']=v.date;if(col==='expenses')lastKeep.category=v.category;
     const keep=['date'].concat(col==='expenses'?['category']:[]);
     sc.fields.forEach(fl=>{if(!keep.includes(fl.k)){const el=form.querySelector('#f_'+fl.k);if(el)el.value=''}});
@@ -371,9 +403,25 @@ function renderRecent(){
   }).join(''):'<div class="empty">لسه ما سجلتش حاجة من الصفحة دي</div>';
   r.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delRow(...b.dataset.del.split('|')));
 }
+async function fileAct(col,key,mode){
+  const [id,k]=key.split('|'),x=data[col].find(r=>r.id===id),m=x&&x[k];if(!m)return;
+  const w=mode==='open'?window.open('','_blank'):null;
+  try{
+    toast('جاري تحميل الملف...');
+    const blob=await store.getFile(m),url=URL.createObjectURL(blob);
+    if(mode==='open'){if(w)w.location.href=url;else location.href=url}
+    else{
+      const fr=document.createElement('iframe');fr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';fr.src=url;
+      fr.onload=()=>{try{fr.contentWindow.focus();fr.contentWindow.print()}catch(e){window.open(url,'_blank')}setTimeout(()=>fr.remove(),60000)};
+      document.body.appendChild(fr);
+    }
+    setTimeout(()=>URL.revokeObjectURL(url),120000);
+  }catch(e){if(w)w.close();console.error(e);toast('ماقدرتش أفتح الملف: '+(e.code||e.message))}
+}
 async function delRow(c,id){
   if(!confirm('متأكد إنك عايز تمسح العملية دي؟'))return;
-  try{await store.remove(c,id);toast('اتمسحت')}catch(e){toast('ماتمسحتش: '+(e.code||e.message))}
+  const x=data[c].find(r=>r.id===id);
+  try{await store.remove(c,id);if(x)for(const k of ['chkF','invF'])if(x[k]&&x[k].fid)store.delFile(x[k]).catch(()=>{});toast('اتمسحت')}catch(e){toast('ماتمسحتش: '+(e.code||e.message))}
 }
 
 /* ============================ الجداول ============================ */
@@ -400,11 +448,14 @@ function tableBody(col){
   const shown=rows.slice(0,ui.limit);
   t.innerHTML='<table><thead><tr>'+cols.map(c=>'<th class="'+(c[2]?'num':'')+'">'+c[1]+'</th>').join('')+'<th></th></tr></thead><tbody>'+shown.map(x=>'<tr>'+cols.map(c=>{
     let val=x[c[0]];
+    if(c[3]){const m=x[c[0]];return '<td class="act" style="text-align:center">'+(m&&m.fid?'<button class="ib" title="فتح '+esc(m.name)+'" data-fo="'+x.id+'|'+c[0]+'">📄</button><button class="ib" title="طباعة" data-fp="'+x.id+'|'+c[0]+'">🖨️</button>':'<span class="muted">—</span>')+'</td>'}
     if(c[0]==='note'&&x.place)val=(val?val+' — ':'')+'مكان: '+x.place;
     return '<td class="'+(c[2]?'num':'')+'">'+(c[2]?fmt(val):esc(val))+'</td>';
   }).join('')+'<td class="act"><button class="ib" title="تعديل" data-ed="'+x.id+'">✏️</button><button class="ib" title="حذف" data-rm="'+x.id+'">🗑</button></td></tr>').join('')+'</tbody></table>'+(rows.length>shown.length?'<div class="empty"><button class="btn ghost sm" id="more">عرض المزيد ('+(rows.length-shown.length)+')</button></div>':'');
   t.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editRow(col,b.dataset.ed));
   t.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>delRow(col,b.dataset.rm));
+  t.querySelectorAll('[data-fo]').forEach(b=>b.onclick=()=>fileAct(col,b.dataset.fo,'open'));
+  t.querySelectorAll('[data-fp]').forEach(b=>b.onclick=()=>fileAct(col,b.dataset.fp,'print'));
   $('#more')?.addEventListener('click',()=>{ui.limit+=300;tableBody(col)});
 }
 function editRow(col,id){
@@ -417,7 +468,7 @@ function editRow(col,id){
   document.body.appendChild(m);
 }
 function exportCSV(col){
-  const cols=TABLE_COLS[col];
+  const cols=TABLE_COLS[col].filter(c=>!c[3]);
   const rows=filtered(col).map(x=>cols.map(c=>'"'+String(c[0]==='note'&&x.place?(x.note?x.note+' — ':'')+'مكان: '+x.place:(x[c[0]]??'')).replace(/"/g,'""')+'"').join(','));
   download('﻿'+cols.map(c=>c[1]).join(',')+'\n'+rows.join('\n'),'infra-'+col+'-'+today()+'.csv','text/csv;charset=utf-8');
 }
