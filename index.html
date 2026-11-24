@@ -342,6 +342,9 @@ if(!FB){
 
 /* ============================ الحالة ============================ */
 const data={expenses:[],revenues:[],clients:[],invoices:[]};
+const VIEWER_EMAILS=['dr.mostafa@ing.com'];
+let viewer=false;
+const viewOk=v=>!viewer||v==='dash'||v==='track';
 let user=null,view=location.hash.slice(1)||'entry',entryCol='expenses';
 const ui={q:'',month:'',cat:'',limit:200,period:'',ftab:'income',facc:'',flimit:300};
 const sortRows=a=>a.slice().sort((x,y)=>(y.date||'').localeCompare(x.date||'')||(y.t||0)-(x.t||0));
@@ -671,6 +674,7 @@ function renderTrack(){
   $('#tq').oninput=e=>{tk.q=e.target.value;trackBody()};
   $('#tarch').onclick=()=>{tk.arch=!tk.arch;trackBody()};
   $('#tnew').onclick=()=>invModal();
+  if(viewer){tk.sum=true;tk.arch=false;['#tnew','#tarch','#tsm'].forEach(i=>$(i).style.display='none')}
   $('#tsm').onclick=()=>{tk.sum=!tk.sum;trackBody()};
   $('#tprt').onclick=()=>{trackBody();window.print()};
   trackBody();
@@ -777,11 +781,12 @@ function renderSettings(){
 /* ============================ التنقل والتشغيل ============================ */
 function go(v){view=v;location.hash=v;render()}
 function renderNav(){
-  $('#nav').innerHTML=VIEWS.map(([k,l])=>'<button data-v="'+k+'" class="'+(k===view?'on':'')+'">'+(ICONS[k]||'')+'<span>'+l+'</span></button>').join('');
+  $('#nav').innerHTML=VIEWS.filter(v=>viewOk(v[0])).map(([k,l])=>'<button data-v="'+k+'" class="'+(k===view?'on':'')+'">'+(ICONS[k]||'')+'<span>'+l+'</span></button>').join('');
   $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{document.body.classList.remove('open');go(b.dataset.v)});
   $('#burger').onclick=()=>document.body.classList.toggle('open');$('#bd').onclick=()=>document.body.classList.remove('open');
 }
 function render(){
+  if(!viewOk(view))view='dash';
   renderNav();
   if(view==='entry')renderEntry();
   else if(COLNAMES.includes(view)){ui.limit=200;renderTable(view)}
@@ -801,7 +806,7 @@ function onData(c){
   else if(view==='fin')finBody();
   else if(view==='settings'){const c=$('#cnt');if(c)c.textContent=COLNAMES.map(k=>SCHEMA[k].sheet+': '+data[k].length).join(' — ')}
 }
-window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&h!==view&&VIEWS.some(v=>v[0]===h)){view=h;render()}});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&h!==view&&VIEWS.some(v=>v[0]===h)&&viewOk(h)){view=h;render()}});
 $('#mode').textContent=FB?'متصل':'وضع تجريبي';$('#mode').className='badge'+(FB?'':' demo');
 $('#logout').onclick=()=>store.signOut();
 $('#loginForm').onsubmit=async e=>{
@@ -812,8 +817,10 @@ $('#loginForm').onsubmit=async e=>{
 let started=false;
 store.onAuth(u=>{
   user=u;
+  viewer=!!(u&&VIEWER_EMAILS.includes(String(u.email).toLowerCase()));
+  document.body.classList.toggle('viewer',viewer);
   $('#login').classList.toggle('hidden',!!u);
-  $('#who').textContent=u?u.email:'';
+  $('#who').textContent=u?u.email+(viewer?' (عرض فقط)':''):'';
   $('#logout').classList.toggle('hidden',!(u&&FB));
   if(u&&!started){
     started=true;
