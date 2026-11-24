@@ -117,6 +117,7 @@ table{background:rgba(255,255,255,.72)}
 .topbar .clk b{font-size:20px;color:var(--navy);font-variant-numeric:tabular-nums;direction:ltr}
 .topbar .clk span{font-size:12px;color:var(--mute)}
 .phead{display:none;align-items:center;gap:14px}
+.pblock{display:none}
 .phead img{height:64px}
 .phead .pt{font-size:12.5px;line-height:1.6}.phead .pt b{font-size:18px;color:#7B1E3A;direction:ltr;display:block}
 @media(max-width:900px){.topbar{padding:6px 12px;gap:10px;top:46px}.topbar img{height:38px}.topbar .ttl{font-size:14px}.topbar .clk b{font-size:15px}.topbar .clk span{display:none}}
@@ -148,6 +149,9 @@ table{background:rgba(255,255,255,.72)}
 .seg4 button{border:2px solid var(--line);background:#fff;border-radius:12px;padding:9px 16px;font-weight:700;cursor:pointer;color:var(--mute)}
 .seg4 button.on{background:var(--navy);color:var(--gold);border-color:var(--gold)}
 @media print{
+ .scr,#toast{display:none!important}
+ .pblock{display:block!important}
+ .tools input,.tools select{display:none}
  @page{size:A4;margin:12mm}
  #wm{display:none!important}
  #side,.mtop,#bd,.noprint{display:none!important}
@@ -656,10 +660,11 @@ function finBody(){
 const STAGES=['تم التسليم للشركة','تم الوصول للعقود والمستخلصات','تم الوصول للمالية','تم إصدار جواب تأمينات','تم سداد التأمينات','تم إصدار الفاتورة الإلكترونية','تم الدخول على أمر الدفع','تم صدور رقم أمر الدفع','تم الصرف'];
 const tk={q:'',arch:false};
 function renderTrack(){
-  $('#view').innerHTML='<div class="tools noprint"><h2 style="margin:0">متابعة الفواتير</h2><input class="grow" id="tq" placeholder="بحث بالجهة أو المشروع أو رقم الفاتورة..." value="'+esc(tk.q)+'"><button class="btn ghost sm" id="tarch"></button><button class="btn" style="background:var(--navy);min-height:40px;padding:8px 16px" id="tnew">＋ فاتورة جديدة</button></div><div id="tsumm"></div><div id="tbody"></div>';
+  $('#view').innerHTML='<div class="tools noprint"><h2 style="margin:0">متابعة الفواتير</h2><input class="grow" id="tq" placeholder="بحث بالجهة أو المشروع أو رقم الفاتورة..." value="'+esc(tk.q)+'"><button class="btn ghost sm" id="tarch"></button><button class="btn sm" style="background:var(--gold);color:#4a0f20" id="tprt">🖨️ طباعة الملخص</button><button class="btn" style="background:var(--navy);min-height:40px;padding:8px 16px" id="tnew">＋ فاتورة جديدة</button></div><div id="tsumm" class="scr"></div><div id="tbody" class="scr"></div><div id="tprint" class="pblock"></div>';
   $('#tq').oninput=e=>{tk.q=e.target.value;trackBody()};
   $('#tarch').onclick=()=>{tk.arch=!tk.arch;trackBody()};
   $('#tnew').onclick=()=>invModal();
+  $('#tprt').onclick=()=>{trackBody();window.print()};
   trackBody();
 }
 function invModal(x){
@@ -707,6 +712,12 @@ function trackBody(){
   const byP=new Map();
   list.forEach(x=>{const p=(x.project||'').trim()||'بدون مشروع';(byP.get(p)||byP.set(p,[]).get(p)).push(x)});
   if(!byP.size){box.innerHTML='<div class="card empty">'+(tk.arch?'الأرشيف فاضي':'مفيش فواتير تحت المتابعة — دوس «＋ فاتورة جديدة»')+'</div>';return}
+  const stc=STAGES.map((l,i)=>[l,list.filter(x=>(x.stage||1)===i+1).length]).filter(r=>r[1]);
+  $('#tprint').innerHTML=PHEADER('ملخص متابعة الفواتير'+(tk.arch?' (الأرشيف — تم الصرف)':'')).replace(' — '+perLabel(),'')+
+    '<h3>الفواتير حسب المرحلة</h3><table style="min-width:0"><thead><tr><th>المرحلة</th><th class="num">عدد الفواتير</th></tr></thead><tbody>'+stc.map(r=>'<tr><td>'+r[0]+'</td><td class="num">'+r[1]+'</td></tr>').join('')+'<tr class="grp"><td>الإجمالي</td><td class="num">'+list.length+'</td></tr></tbody></table>'+
+    '<h3 style="margin-top:14px">الفواتير حسب المشروع</h3><table style="min-width:0"><thead><tr><th>المشروع</th><th>الجهة</th><th>رقم الفاتورة</th><th>التاريخ</th><th>عن شهر</th><th class="num">المبلغ</th><th>المرحلة الحالية</th></tr></thead><tbody>'+
+    [...byP].sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([p,rows])=>rows.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map((x,i)=>'<tr><td>'+(i?'':esc(p))+'</td><td>'+esc(x.party||'')+'</td><td>'+esc(x.no||'')+'</td><td>'+esc(x.date||'')+'</td><td>'+esc(x.forMonth||'')+'</td><td class="num">'+fmt(x.amount)+'</td><td>'+STAGES[(x.stage||1)-1]+'</td></tr>').join('')+'<tr class="grp"><td colspan="5">إجمالي '+esc(p)+' ('+rows.length+')</td><td class="num">'+fmt(sum(rows))+'</td><td></td></tr>').join('')+
+    '<tr class="grp"><td colspan="5">الإجمالي العام ('+list.length+' فاتورة)</td><td class="num">'+fmt(sum(list))+'</td><td></td></tr></tbody></table>';
   box.innerHTML=[...byP].sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([p,rows])=>{
     rows.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.t||0)-(b.t||0));
     return '<div class="card party" style="margin-bottom:16px"><div class="phd"><h3 style="margin:0">📁 '+esc(p)+'</h3><span class="muted">'+rows.length+' فاتورة</span></div>'+rows.map(card).join('')+'<div class="ptot"><span>إجمالي المشروع ('+rows.length+' فاتورة)</span><b>'+fmt(sum(rows))+' ج.م</b></div></div>';
