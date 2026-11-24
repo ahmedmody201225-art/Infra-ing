@@ -129,6 +129,9 @@ table{background:rgba(255,255,255,.72)}
 .ih{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.ia{font-weight:800;color:var(--navy);margin-inline-start:auto}
 .party{border-top:4px solid var(--gold)}
 .phd{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.ptot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:12px 14px;background:var(--navy);color:var(--gold);border-radius:12px;font-weight:700}
+.ptot b{font-size:18px;color:#fff}
+.ptag{background:var(--navy-t);color:var(--navy);border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600}
 .proj{margin-top:12px;padding-inline-start:10px;border-inline-start:3px solid var(--navy-t)}
 .proj h4{margin:0 0 4px;color:var(--navy);font-size:15px}
 .chips2{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
@@ -244,7 +247,7 @@ const TABLE_COLS={
  revenues:[['date','التاريخ'],['party','الجهة'],['project','المشروع'],['amount','المبلغ',1],['cheque','شيك/تحويل'],['invoice','الفاتورة'],['bank','الإيداع'],['chkF','📎 الشيك',0,1],['invF','📎 الفاتورة',0,1]],
  clients:[['date','التاريخ'],['name','العميل'],['project','المشروع'],['amount','المبلغ',1],['note','ملاحظات']]};
 SCHEMA.invoices={title:'فاتورة',sheet:'متابعة الفواتير',color:'var(--navy)',fields:[
-  {k:'party',l:'الجهة / الشركة (بتجمع مشاريعها)',t:'text',list:'dl_party'},
+  {k:'party',l:'الجهة / الشركة',t:'text',list:'dl_party'},
   {k:'project',l:'المشروع',t:'text',req:1,list:'dl_proj'},
   {k:'no',l:'رقم الفاتورة',t:'text',req:1},
   {k:'date',l:'تاريخ الفاتورة',t:'date',req:1},
@@ -696,22 +699,17 @@ function trackBody(){
   const card=x=>{
     const s=x.stage||1,sd=x.stageDates||{};
     const chips=STAGES.map((l,i)=>{const n=i+1;return '<button class="chip2 '+(n<s?'dn':n===s?'cur':'')+'" data-sid="'+x.id+'" data-n="'+n+'" title="'+(sd[n]||'')+'">'+(n<s?'✓ ':'')+l+(sd[n]&&n<=s?'<small>'+sd[n]+'</small>':'')+'</button>'}).join('');
-    return '<div class="inv"><div class="ih"><b>فاتورة '+esc(x.no||'—')+'</b><span class="muted">بتاريخ '+esc(x.date||'')+(x.forMonth?' — عن شهر '+esc(x.forMonth):'')+'</span><span class="ia">'+fmt(x.amount)+' ج.م</span><span class="iact"><button class="ib" title="تعديل" data-ie="'+x.id+'">✏️</button><button class="ib" title="حذف" data-ir="'+x.id+'">🗑</button></span></div>'
+    return '<div class="inv"><div class="ih"><b>فاتورة '+esc(x.no||'—')+'</b>'+(x.party?'<span class="ptag">'+esc(x.party)+'</span>':'')+'<span class="muted">بتاريخ '+esc(x.date||'')+(x.forMonth?' — عن شهر '+esc(x.forMonth):'')+'</span><span class="ia">'+fmt(x.amount)+' ج.م</span><span class="iact"><button class="ib" title="تعديل" data-ie="'+x.id+'">✏️</button><button class="ib" title="حذف" data-ir="'+x.id+'">🗑</button></span></div>'
      +'<div class="chips2">'+chips+'</div>'
      +'<div class="ist"><span>'+(x.note?'<span class="muted">'+esc(x.note)+'</span>':'')+'</span>'
      +(x.done?'<button class="btn ghost sm" data-back="'+x.id+'">↩ استرجاع للمتابعة</button>':'<span>'+(s>1?'<button class="btn ghost sm" data-prev="'+x.id+'">◀ رجوع</button> ':'')+'<button class="btn sm" style="background:var(--navy)" data-next="'+x.id+'">'+(s===8?'تم الصرف ✓':'التالي: '+STAGES[s]+' ▶')+'</button></span>')+'</div></div>';
   };
-  const byParty=new Map();
-  list.forEach(x=>{const pa=(x.party||'').trim()||'بدون جهة',p=(x.project||'بدون مشروع').trim();const m=byParty.get(pa)||byParty.set(pa,new Map()).get(pa);(m.get(p)||m.set(p,[]).get(p)).push(x)});
-  if(!byParty.size){box.innerHTML='<div class="card empty">'+(tk.arch?'الأرشيف فاضي':'مفيش فواتير تحت المتابعة — دوس «＋ فاتورة جديدة»')+'</div>';return}
-  const ar=(a,b)=>a.localeCompare(b,'ar');
-  box.innerHTML=[...byParty].sort((a,b)=>ar(a[0],b[0])).map(([pa,projs])=>{
-    const all=[...projs.values()].flat();
-    return '<div class="card party" style="margin-bottom:16px"><div class="phd"><h3 style="margin:0">🏢 '+esc(pa)+'</h3><span class="muted">'+projs.size+' مشروع — '+all.length+' فاتورة</span><span class="ia">الإجمالي: '+fmt(sum(all))+' ج.م</span></div>'
-     +[...projs].sort((a,b)=>ar(a[0],b[0])).map(([p,rows])=>{
-      rows.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.t||0)-(b.t||0));
-      return '<div class="proj"><h4>📁 '+esc(p)+' <span class="muted" style="font-weight:400">— '+rows.length+' فاتورة — '+fmt(sum(rows))+' ج.م</span></h4>'+rows.map(card).join('')+'</div>';
-     }).join('')+'</div>';
+  const byP=new Map();
+  list.forEach(x=>{const p=(x.project||'').trim()||'بدون مشروع';(byP.get(p)||byP.set(p,[]).get(p)).push(x)});
+  if(!byP.size){box.innerHTML='<div class="card empty">'+(tk.arch?'الأرشيف فاضي':'مفيش فواتير تحت المتابعة — دوس «＋ فاتورة جديدة»')+'</div>';return}
+  box.innerHTML=[...byP].sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([p,rows])=>{
+    rows.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.t||0)-(b.t||0));
+    return '<div class="card party" style="margin-bottom:16px"><div class="phd"><h3 style="margin:0">📁 '+esc(p)+'</h3><span class="muted">'+rows.length+' فاتورة</span></div>'+rows.map(card).join('')+'<div class="ptot"><span>إجمالي المشروع ('+rows.length+' فاتورة)</span><b>'+fmt(sum(rows))+' ج.م</b></div></div>';
   }).join('');
   const g=(sel,fn)=>box.querySelectorAll(sel).forEach(b=>b.onclick=()=>fn(b));
   const cur=id=>data.invoices.find(r=>r.id===id);
