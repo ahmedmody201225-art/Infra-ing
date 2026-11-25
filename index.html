@@ -132,7 +132,8 @@ table{background:rgba(255,255,255,.72)}
 @media(max-width:600px){.stg-sum{grid-template-columns:repeat(2,1fr)}}
 .stg-sum span{font-size:11.5px;color:var(--mute);line-height:1.35}
 .inv{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px;background:rgba(255,255,255,.7)}
-.ih{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.ia{font-weight:800;color:var(--navy);margin-inline-start:auto}
+.ih{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.sbadge{background:var(--gold);color:#4a0f20;border-radius:99px;padding:3px 12px;font-size:13px;font-weight:800;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.ia{font-weight:800;color:var(--navy);margin-inline-start:auto}
 .qchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .qc{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:4px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--navy);font-family:inherit}
 .qc.on{background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -731,7 +732,7 @@ function trackBody(){
   const card=x=>{
     const s=x.stage||1,sd=x.stageDates||{};
     const chips=STAGES.map((l,i)=>{const n=i+1;return '<button class="chip2 '+(n<s?'dn':n===s?'cur':'')+'" data-sid="'+x.id+'" data-n="'+n+'" title="'+(sd[n]||'')+'">'+(n<s?'✓ ':'')+l+(sd[n]&&n<=s?'<small>'+sd[n]+'</small>':'')+'</button>'}).join('');
-    return '<div class="inv"><div class="ih"><b>فاتورة '+esc(x.no||'—')+'</b>'+(x.party?'<span class="ptag">'+esc(x.party)+'</span>':'')+'<span class="muted">بتاريخ '+esc(x.date||'')+(x.forMonth?' — عن شهر '+esc(x.forMonth):'')+'</span><span class="ia">'+fmt(x.amount)+' ج.م</span><span class="iact"><button class="ib" title="تعديل" data-ie="'+x.id+'">✏️</button><button class="ib" title="حذف" data-ir="'+x.id+'">🗑</button></span></div>'
+    return '<div class="inv"><div class="ih"><b>فاتورة '+esc(x.no||'—')+'</b>'+(x.party?'<span class="ptag">'+esc(x.party)+'</span>':'')+'<span class="muted">بتاريخ '+esc(x.date||'')+(x.forMonth?' — عن شهر '+esc(x.forMonth):'')+'</span><span class="sbadge">المرحلة '+s+' من 9</span><span class="ia">'+fmt(x.amount)+' ج.م</span><span class="iact"><button class="ib" title="تعديل" data-ie="'+x.id+'">✏️</button><button class="ib" title="حذف" data-ir="'+x.id+'">🗑</button></span></div>'
      +'<div class="chips2">'+chips+'</div>'
      +'<div class="ist"><span>'+(x.note?'<span class="muted">'+esc(x.note)+'</span>':'')+'</span>'
      +(x.done?'<button class="btn ghost sm" data-back="'+x.id+'">↩ استرجاع للمتابعة</button>':'<span>'+(s>1?'<button class="btn ghost sm" data-prev="'+x.id+'">◀ رجوع</button> ':'')+'<button class="btn sm" style="background:var(--navy)" data-next="'+x.id+'">'+(s===8?'تم الصرف ✓':'التالي: '+STAGES[s]+' ▶')+'</button></span>')+'</div></div>';
@@ -743,7 +744,7 @@ function trackBody(){
   const sumHtml=
     '<h3>الفواتير حسب المرحلة</h3><table style="min-width:0"><thead><tr><th>المرحلة</th><th class="num">عدد الفواتير</th></tr></thead><tbody>'+stc.map(r=>'<tr><td>'+r[0]+'</td><td class="num">'+r[1]+'</td></tr>').join('')+'<tr class="grp"><td>الإجمالي</td><td class="num">'+list.length+'</td></tr></tbody></table>'+
     '<h3 style="margin-top:14px">الفواتير حسب المشروع</h3><table style="min-width:0"><thead><tr><th>المشروع</th><th>الجهة</th><th>رقم الفاتورة</th><th>التاريخ</th><th>عن شهر</th><th class="num">المبلغ</th><th>المرحلة الحالية</th></tr></thead><tbody>'+
-    [...byP].sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([p,rows])=>rows.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map((x,i)=>'<tr><td>'+(i?'':esc(p))+'</td><td>'+esc(x.party||'')+'</td><td>'+esc(x.no||'')+'</td><td>'+esc(x.date||'')+'</td><td>'+esc(x.forMonth||'')+'</td><td class="num">'+fmt(x.amount)+'</td><td>'+STAGES[(x.stage||1)-1]+'</td></tr>').join('')+'<tr class="grp"><td colspan="5">إجمالي '+esc(p)+' ('+rows.length+')</td><td class="num">'+fmt(sum(rows))+'</td><td></td></tr>').join('')+
+    [...byP].sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([p,rows])=>rows.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map((x,i)=>'<tr><td>'+(i?'':esc(p))+'</td><td>'+esc(x.party||'')+'</td><td>'+esc(x.no||'')+'</td><td>'+esc(x.date||'')+'</td><td>'+esc(x.forMonth||'')+'</td><td class="num">'+fmt(x.amount)+'</td><td>'+(x.stage||1)+'/9 — '+STAGES[(x.stage||1)-1]+'</td></tr>').join('')+'<tr class="grp"><td colspan="5">إجمالي '+esc(p)+' ('+rows.length+')</td><td class="num">'+fmt(sum(rows))+'</td><td></td></tr>').join('')+
     '<tr class="grp"><td colspan="5">الإجمالي العام ('+list.length+' فاتورة)</td><td class="num">'+fmt(sum(list))+'</td><td></td></tr></tbody></table>';
   $('#tprint').innerHTML=PHEADER('ملخص متابعة الفواتير'+(tk.arch?' (الأرشيف — تم الصرف)':'')).replace(' — '+perLabel(),'')+sumHtml;
   $('#tsm').textContent=tk.sum?'↩ عرض التفاصيل':'📋 ملخص الفواتير';
